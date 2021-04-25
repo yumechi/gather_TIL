@@ -1,5 +1,9 @@
 package main
 
+import "github.com/yumechi/gather_TIL/settings/gather_til"
+
 func main() {
-	println("hello, world")
+	settings := gather_til.GetEnv()
+	// debug
+	println(settings.Github.GitHubToken)
 }
