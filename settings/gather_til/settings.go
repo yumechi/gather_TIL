@@ -7,6 +7,28 @@ import (
 	"strings"
 )
 
+type NotificationSetting interface {
+	Post()
+}
+
+type Notification struct {
+}
+
+type Discord struct {
+	WebhookUrl string
+	Notification
+}
+
+func (d Discord) Post() {
+}
+
+type Slack struct {
+	Token string
+	Notification
+}
+
+func (d Slack) Post() {
+}
 
 type GitHubSettings struct {
 	GitHubToken string
@@ -16,7 +38,8 @@ type GitHubSettings struct {
 }
 
 type EnvSettings struct {
-	Github GitHubSettings
+	GitHub               GitHubSettings
+	NotificationSettings []NotificationSetting
 }
 
 var defaultSettingValues = map[string]string {
@@ -33,6 +56,24 @@ func getDefaultEnv(key string) string {
 	return value
 }
 
+func getNotificationSetting() []NotificationSetting {
+	var result []NotificationSetting
+	if key := os.Getenv("DISCORD_URL"); len(key) != 0 {
+		discord := Discord{
+			WebhookUrl: os.Getenv("DISCORD_URL"),
+		}
+		result = append(result, discord)
+	}
+	if key := os.Getenv("SLACK_TOKEN"); len(key) != 0 {
+		slack := Slack{
+			Token: os.Getenv("SLACK_TOKEN"),
+		}
+		result = append(result, slack)
+	}
+	return result
+}
+
+
 func GetEnv() EnvSettings {
 	mode := getDefaultEnv("EXEC_MODE")
 	filename := strings.Join([]string{".env", AppName, mode}, ".")
@@ -48,12 +89,15 @@ func GetEnv() EnvSettings {
 		}
 	}
 
+	notification := getNotificationSetting()
+
 	return EnvSettings {
-		GitHubSettings{
+		GitHub: GitHubSettings{
 			GitHubToken: os.Getenv("GITHUB_TOKEN"),
 			RepoUserName: getDefaultEnv("REPO_USER_NAME"),
 			RepoName:  getDefaultEnv("REPO_NAME"),
 			TargetLabel:  getDefaultEnv("TARGET_LABEL"),
 		},
+		NotificationSettings: notification,
 	}
 }
